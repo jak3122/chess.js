@@ -1896,6 +1896,7 @@ var Crazyhouse = function(options) {
         ROOK: ROOK,
         QUEEN: QUEEN,
         KING: KING,
+        HAND: HAND,
         SQUARES: (function() {
             /* from the ECMA-262 spec (section 12.6.4):
              * "The mechanics of enumerating the properties ... is
