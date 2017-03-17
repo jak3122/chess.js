@@ -1658,13 +1658,6 @@ var Crazyhouse = function(options) {
             s += zh_hand[BLACK][i].type.toLowerCase();
         }
         s += '\n';
-        if (fake_piece_squares.length > 0) {
-            s += 'fake pieces: ';
-            s += fake_piece_squares.map(function(s) { return algebraic(s) }).join(', ');
-            s += '\n';
-        }
-        s += rooks_to_str(ROOKS) + '\n';
-        s += 'kings: [w:'+algebraic(kings.w)+'][b:'+algebraic(kings.b)+']\n';
         return s;
     }
 
@@ -2328,14 +2321,28 @@ var Crazyhouse = function(options) {
         return remove_from_hand(piece);
     },
 
-    get_hand: function(color) {
-        if (color) {
-            return zh_hand[color].map(function(p) {
-                return color.charAt(0) === 'w' ? p.type.toUpperCase() : p.type;
-            });
+    get_hand: function(options) {
+        var color = (typeof options !== 'undefined' && 'color' in options &&
+                options.color);
+        if (color)
+            color = color.charAt(0);
+        var verbose = (typeof options !== 'undefined' && 'verbose' in options &&
+                options.verbose);
+        if (verbose) {
+            if (color) {
+                return zh_hand[color];
+            } else {
+                return zh_hand;
+            }
         } else {
-            return {w: zh_hand.w.map(function(p) { return p.type.toUpperCase(); }),
-                    b: zh_hand.b.map(function(p) { return p.type; }) };
+            if (color) {
+                return zh_hand[color].map(function(p) {
+                    return color.charAt(0) === 'w' ? p.type.toUpperCase() : p.type;
+                });
+            } else {
+                return {w: zh_hand.w.map(function(p) { return p.type.toUpperCase(); }),
+                        b: zh_hand.b.map(function(p) { return p.type; }) };
+            }
         }
     },
 
@@ -2391,6 +2398,18 @@ var Crazyhouse = function(options) {
         to = SQUARES[to];
         direction = direction === 'k' ? BITS.KSIDE_CASTLE : BITS.QSIDE_CASTLE;
         return castling_legal(from, to, direction, side);
+    },
+
+    // returns the position portion of the fen string (before the first space),
+    // without the crazyhouse hand or fake piece ~ indicators. useful for
+    // working with chessboard.js for example.
+    position: function() {
+        var f = generate_fen().split(' ')[0];
+        // remove hand from end
+        f = f.split('/').slice(0, 8).join('/');
+        // remove fake piece indicators
+        f = f.replace(/~/g, '');
+        return f;
     }
 
 

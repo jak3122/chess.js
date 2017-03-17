@@ -965,3 +965,46 @@ describe("960 Castling Undo", function() {
     });
 });
 
+describe("Crazyhouse hand", function() {
+    it("empty hand for start pos", function() {
+        var game = new Crazyhouse();
+        var hand = game.get_hand({verbose: true});
+        assert.deepEqual({w:[],b:[]}, hand);
+    });
+    it("captured pieces", function() {
+        var game = new Crazyhouse();
+        game.move('e4');
+        game.move('e5');
+        game.move('d4');
+        assert.deepEqual({w:[],b:[]}, game.get_hand({verbose: true}));
+        game.move('exd4');
+        var hand = {w:[],b:[{type: game.PAWN, color: 'b'}]};
+        assert.deepEqual(hand, game.get_hand({verbose: true}));
+        game.move('Qxd4');
+        var hand = {w:[{type: game.PAWN, color:'w'}],b:[{type: game.PAWN, color: 'b'}]};
+        assert.deepEqual(hand, game.get_hand({verbose: true}));
+        game.move('Nc6');
+        game.move('Bg5');
+        game.move('Nxd4');
+        var hand = {w:[{type: game.PAWN, color:'w'}],b:[{type: game.PAWN, color: 'b'},{type: game.QUEEN, color:'b'}]};
+        assert.deepEqual(hand, game.get_hand({verbose: true}));
+        game.move('Bxd8');
+        var hand = {w:[{type: game.PAWN, color:'w'},{type: game.QUEEN, color:'w'}],b:[{type: game.PAWN, color: 'b'},{type: game.QUEEN, color:'b'}]};
+        assert.deepEqual(hand, game.get_hand({verbose: true}));
+    });
+});
+
+describe("Position API", function() {
+    it("start position", function() {
+        var game = new Crazyhouse();
+        var p = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR';
+        assert.equal(p, game.position());
+    });
+    it("with fake pieces", function() {
+        var game = new Crazyhouse();
+        game.load('7k/4Q~3/8/5Q~2/1Q~5P/PPPP1P1P/P1PNRPRP/Q4K2/BBPNPNBRNRBQ b - - 98 77');
+        var p = '7k/4Q3/8/5Q2/1Q5P/PPPP1P1P/P1PNRPRP/Q4K2';
+        assert.equal(p, game.position());
+    });
+});
+
