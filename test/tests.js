@@ -1016,7 +1016,7 @@ describe("Verbose Hand Moves", function() {
     it("piece drop", function() {
         var game = new Crazyhouse();
         game.load('r1bqk1nr/pppp1ppp/4p1n1/1N2P3/5P1b/1BN5/PPP3PP/R1BQK2R/P w KQkq - 20 11');
-        game.move({from: '@', to: 'f2', promotion: 'q'});
+        game.move({from: '@', to: 'f2', promotion: 'q', piece:'p'});
         assert.equal('r1bqk1nr/pppp1ppp/4p1n1/1N2P3/5P1b/1BN5/PPP2PPP/R1BQK2R/ b KQkq - 21 11', game.fen());
     });
 });

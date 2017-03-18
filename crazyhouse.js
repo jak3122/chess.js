@@ -2342,7 +2342,9 @@ var Crazyhouse = function(options) {
                 if (move.from === algebraic(moves[i].from) &&
                         move.to === algebraic(moves[i].to) &&
                         (!('promotion' in moves[i]) ||
-                         move.promotion === moves[i].promotion)) {
+                         move.promotion === moves[i].promotion) &&
+                        (!('piece' in moves[i]) ||
+                         move.piece.toLowerCase() === moves[i].piece.toLowerCase())) {
                     move_obj = moves[i];
                     break;
                 }
