@@ -2344,6 +2344,7 @@ var Crazyhouse = function(options) {
                         (!('promotion' in moves[i]) ||
                          move.promotion === moves[i].promotion) &&
                         (!('piece' in moves[i]) ||
+                         !('piece' in move) ||
                          move.piece.toLowerCase() === moves[i].piece.toLowerCase())) {
                     move_obj = moves[i];
                     break;
