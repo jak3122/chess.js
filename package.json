@@ -1,6 +1,6 @@
 {
   "name": "crazyhouse.js",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "A Javascript library for crazyhouse with 960 support, based on the chess.js library.",
   "author": "Joseph Ksiazek <jak3122@rit.edu> (https://github.com/jak3122)",
   "license": "BSD-2-Clause",
