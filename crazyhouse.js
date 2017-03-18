@@ -884,7 +884,11 @@ var Crazyhouse = function(options) {
             if (castling[us] & BITS.KSIDE_CASTLE) {
                 var castling_from = kings[us];
                 var castling_to;
-                castling_to = get_960_castling_square(BITS.KSIDE_CASTLE, us);
+                if (mode_960) {
+                    castling_to = get_960_castling_square(BITS.KSIDE_CASTLE, us);
+                } else {
+                    castling_to = us === WHITE ? SQUARES.g1 : SQUARES.g8;
+                }
                 var clear = castling_legal(castling_from, castling_to, BITS.KSIDE_CASTLE, us);
                 if (clear) {
                     add_move(board, moves, kings[us] , castling_to,
@@ -896,7 +900,11 @@ var Crazyhouse = function(options) {
             if (castling[us] & BITS.QSIDE_CASTLE) {
                 var castling_from = kings[us];
                 var castling_to;
-                castling_to = get_960_castling_square(BITS.QSIDE_CASTLE, us);
+                if (mode_960) {
+                    castling_to = get_960_castling_square(BITS.QSIDE_CASTLE, us);
+                } else {
+                    castling_to = us === WHITE ? SQUARES.c1 : SQUARES.c8;
+                }
                 var clear = castling_legal(castling_from, castling_to, BITS.QSIDE_CASTLE, us);
                 if (clear) {
                     add_move(board, moves, kings[us], castling_to,
@@ -965,35 +973,22 @@ var Crazyhouse = function(options) {
         var them = swap_color(us);
         if (attacked(them, kings[us]))
             return false;
-        // in 960 you castle by dropping the king onto
-        // the rook
-        if (!(board[to] && board[to].type == ROOK)) {
-            return false;
-        }
-        // check if this rook has the correct castling flag
-        if (!rook_can_castle(to, direction, side)) {
-            return false;
-        }
-        var rook_to, king_to;
-        if (direction & BITS.KSIDE_CASTLE) {
-            rook_to = us === WHITE ? SQUARES.f1 : SQUARES.f8;
-            king_to = us === WHITE ? SQUARES.g1 : SQUARES.g8;
-            var left_sq = Math.min(rook_to, from);
-            for (var i = left_sq; i <= king_to; i++) {
-                if (!(board[i] == null || board[i].type === KING || i === to)) {
-                    return false;
-                }
+        if (mode_960) {
+            // in 960 you castle by dropping the king onto
+            // the rook
+            if (!(board[to] && board[to].type == ROOK)) {
+                return false;
             }
-            for (var i = from; i <= king_to; i++) {
-                if (attacked(them, i)) {
-                    return false;
-                }
+            // check if this rook has the correct castling flag
+            if (!rook_can_castle(to, direction, side)) {
+                return false;
             }
-        } else if (direction & BITS.QSIDE_CASTLE) {
-            rook_to = us === WHITE ? SQUARES.d1 : SQUARES.d8;
-            king_to = us === WHITE ? SQUARES.c1 : SQUARES.c8;
-            if (from <= king_to) {
-                for (var i = to; i <= rook_to; i++) {
+            var rook_to, king_to;
+            if (direction & BITS.KSIDE_CASTLE) {
+                rook_to = us === WHITE ? SQUARES.f1 : SQUARES.f8;
+                king_to = us === WHITE ? SQUARES.g1 : SQUARES.g8;
+                var left_sq = Math.min(rook_to, from);
+                for (var i = left_sq; i <= king_to; i++) {
                     if (!(board[i] == null || board[i].type === KING || i === to)) {
                         return false;
                     }
@@ -1003,17 +998,59 @@ var Crazyhouse = function(options) {
                         return false;
                     }
                 }
-            } else {
-                var left_sq = Math.min(king_to, to);
-                for (var i = left_sq; i <= from; i++) {
-                    if (!(board[i] == null || board[i].type === KING || i === to)) {
-                        return false;
+            } else if (direction & BITS.QSIDE_CASTLE) {
+                rook_to = us === WHITE ? SQUARES.d1 : SQUARES.d8;
+                king_to = us === WHITE ? SQUARES.c1 : SQUARES.c8;
+                if (from <= king_to) {
+                    for (var i = to; i <= rook_to; i++) {
+                        if (!(board[i] == null || board[i].type === KING || i === to)) {
+                            return false;
+                        }
+                    }
+                    for (var i = from; i <= king_to; i++) {
+                        if (attacked(them, i)) {
+                            return false;
+                        }
+                    }
+                } else {
+                    var left_sq = Math.min(king_to, to);
+                    for (var i = left_sq; i <= from; i++) {
+                        if (!(board[i] == null || board[i].type === KING || i === to)) {
+                            return false;
+                        }
+                    }
+                    for (var i = king_to; i <= from; i++) {
+                        if (attacked(them, i)) {
+                            return false;
+                        }
                     }
                 }
-                for (var i = king_to; i <= from; i++) {
-                    if (attacked(them, i)) {
-                        return false;
-                    }
+            }
+        } else {
+            /* king-side castling */
+            if (direction & BITS.KSIDE_CASTLE) {
+                if (board[from + 1] == null &&
+                        board[to]       == null &&
+                        !attacked(them, kings[us]) &&
+                        !attacked(them, from + 1) &&
+                        !attacked(them, to)) {
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+
+            /* queen-side castling */
+            if (direction & BITS.QSIDE_CASTLE) {
+                if (board[from - 1] == null &&
+                        board[from - 2] == null &&
+                        board[from - 3] == null &&
+                        !attacked(them, kings[us]) &&
+                        !attacked(them, from - 1) &&
+                        !attacked(them, to)) {
+                    return true;
+                } else {
+                    return false;
                 }
             }
         }
@@ -1272,35 +1309,53 @@ var Crazyhouse = function(options) {
             if (board[move.from].type === KING) {
                 kings[board[move.from].color] = move.to;
 
-                if (move.flags & (BITS.KSIDE_CASTLE | BITS.QSIDE_CASTLE)) {
-                    var king_to, rook_to, rook_from, castling_flag;
-                    /* if we castled, move the rook next to the king */
-                    if (move.flags & BITS.KSIDE_CASTLE) {
-                        king_to = us === WHITE ? SQUARES.g1 : SQUARES.g8;
-                        rook_to = us === WHITE ? SQUARES.f1 : SQUARES.f8;
-                        castling_flag = BITS.KSIDE_CASTLE;
-                        rook_from = get_960_castling_square(BITS.KSIDE_CASTLE, us);
-                    } else if (move.flags & BITS.QSIDE_CASTLE) {
-                        king_to = us === WHITE ? SQUARES.c1 : SQUARES.c8;
-                        rook_to = us === WHITE ? SQUARES.d1 : SQUARES.d8;
-                        castling_flag = BITS.QSIDE_CASTLE;
-                        rook_from = get_960_castling_square(BITS.QSIDE_CASTLE, us);
+                if (mode_960) {
+                    if (move.flags & (BITS.KSIDE_CASTLE | BITS.QSIDE_CASTLE)) {
+                        var king_to, rook_to, rook_from, castling_flag;
+                        /* if we castled, move the rook next to the king */
+                        if (move.flags & BITS.KSIDE_CASTLE) {
+                            king_to = us === WHITE ? SQUARES.g1 : SQUARES.g8;
+                            rook_to = us === WHITE ? SQUARES.f1 : SQUARES.f8;
+                            castling_flag = BITS.KSIDE_CASTLE;
+                            rook_from = get_960_castling_square(BITS.KSIDE_CASTLE, us);
+                        } else if (move.flags & BITS.QSIDE_CASTLE) {
+                            king_to = us === WHITE ? SQUARES.c1 : SQUARES.c8;
+                            rook_to = us === WHITE ? SQUARES.d1 : SQUARES.d8;
+                            castling_flag = BITS.QSIDE_CASTLE;
+                            rook_from = get_960_castling_square(BITS.QSIDE_CASTLE, us);
+                        }
+                        set_castling_rook(rook_from, 0, us);
+                        if (castling_file[us] == file(rook_from)) {
+                            castling_file[us] = null;
+                        }
+                        board[rook_to] = {type: ROOK, color: us};
+                        if (rook_to !== rook_from) {
+                            board[rook_from] = null;
+                        }
+                        board[king_to] = {type: KING, color: us};
+                        if (move.from !== king_to) {
+                            if (board[move.from] && board[move.from].type == KING) {
+                                board[move.from] = null;
+                            }
+                        }
+                        kings[us] = king_to;
                     }
-                    set_castling_rook(rook_from, 0, us);
-                    if (castling_file[us] == file(rook_from)) {
-                        castling_file[us] = null;
-                    }
-                    board[rook_to] = {type: ROOK, color: us};
-                    if (rook_to !== rook_from) {
-                        board[rook_from] = null;
-                    }
-                    board[king_to] = {type: KING, color: us};
-                    if (move.from !== king_to) {
-                        if (board[move.from] && board[move.from].type == KING) {
-                            board[move.from] = null;
+                } else {
+                    if (move.flags & (BITS.KSIDE_CASTLE | BITS.QSIDE_CASTLE)) {
+                        board[move.to] = board[move.from];
+                        board[move.from] = null;
+                        if (move.flags & BITS.KSIDE_CASTLE) {
+                            var castling_to = move.to - 1;
+                            var castling_from = move.to + 1;
+                            board[castling_to] = board[castling_from];
+                            board[castling_from] = null;
+                        } else if (move.flags & BITS.QSIDE_CASTLE) {
+                            var castling_to = move.to + 1;
+                            var castling_from = move.to - 2;
+                            board[castling_to] = board[castling_from];
+                            board[castling_from] = null;
                         }
                     }
-                    kings[us] = king_to;
                 }
                 /* turn off castling */
                 castling_file[us] = null;
@@ -1407,7 +1462,7 @@ var Crazyhouse = function(options) {
 
         // Update the castling file if this move introduced an ambiguity
         // about which rook to use for castling
-        if (move.piece == ROOK) {
+        if (move.piece == ROOK && mode_960) {
             var us_back_rank = us == WHITE ? RANK_1 : RANK_8;
             if (rank(move.to) == us_back_rank) {
                 if (castling[us]) {
@@ -1500,39 +1555,54 @@ var Crazyhouse = function(options) {
             var move_from = move.from;
 
             if (move.flags & (BITS.KSIDE_CASTLE | BITS.QSIDE_CASTLE)) {
-                move_from = kings[us];
-                // replace the rook for a castling move
-                var rook_to, rook_from;
-                if (move.flags & BITS.KSIDE_CASTLE) {
-                    // get the square that the rook started on
-                    for (var i = 0; i < ROOKS[us].length; i++) {
-                        if (ROOKS[us][i].flag & BITS.KSIDE_CASTLE) {
-                            rook_to = ROOKS[us][i].square;
-                            break;
+                if (mode_960) {
+                    move_from = kings[us];
+                    // replace the rook for a castling move
+                    var rook_to, rook_from;
+                    if (move.flags & BITS.KSIDE_CASTLE) {
+                        // get the square that the rook started on
+                        for (var i = 0; i < ROOKS[us].length; i++) {
+                            if (ROOKS[us][i].flag & BITS.KSIDE_CASTLE) {
+                                rook_to = ROOKS[us][i].square;
+                                break;
+                            }
                         }
-                    }
-                    move_to = us === WHITE ? SQUARES.g1 : SQUARES.g8;
-                    rook_from = us === WHITE ? SQUARES.f1 : SQUARES.f8;
-                } else if (move.flags & BITS.QSIDE_CASTLE) {
-                    for (var i = 0; i < ROOKS[us].length; i++) {
-                        if (ROOKS[us][i].flag & BITS.QSIDE_CASTLE) {
-                            rook_to = ROOKS[us][i].square;
-                            break;
+                        move_to = us === WHITE ? SQUARES.g1 : SQUARES.g8;
+                        rook_from = us === WHITE ? SQUARES.f1 : SQUARES.f8;
+                    } else if (move.flags & BITS.QSIDE_CASTLE) {
+                        for (var i = 0; i < ROOKS[us].length; i++) {
+                            if (ROOKS[us][i].flag & BITS.QSIDE_CASTLE) {
+                                rook_to = ROOKS[us][i].square;
+                                break;
+                            }
                         }
+                        move_to = us === WHITE ? SQUARES.c1 : SQUARES.c8;
+                        rook_from = us === WHITE ? SQUARES.d1 : SQUARES.d8;
                     }
-                    move_to = us === WHITE ? SQUARES.c1 : SQUARES.c8;
-                    rook_from = us === WHITE ? SQUARES.d1 : SQUARES.d8;
-                }
 
-                board[rook_from] = null;
-                board[rook_to] = {type: ROOK, color: us};
-                // only set the rook_from square to empty if the king hasn't
-                // been placed there
-                if (move_to !== move_from) {
-                    board[move_from] = {type: KING, color: us};
-                    if (!(board[move_to] && board[move_to].type == ROOK)) {
-                        board[move_to] = null;
+                    board[rook_from] = null;
+                    board[rook_to] = {type: ROOK, color: us};
+                    // only set the rook_from square to empty if the king hasn't
+                    // been placed there
+                    if (move_to !== move_from) {
+                        board[move_from] = {type: KING, color: us};
+                        if (!(board[move_to] && board[move_to].type == ROOK)) {
+                            board[move_to] = null;
+                        }
                     }
+                } else {
+                    var castling_to, castling_from;
+                    if (move.flags & BITS.KSIDE_CASTLE) {
+                        castling_to = move.to + 1;
+                        castling_from = move.to - 1;
+                    } else if (move.flags & BITS.QSIDE_CASTLE) {
+                        castling_to = move.to - 2;
+                        castling_from = move.to + 1;
+                    }
+                    board[move.from] = board[move.to];
+                    board[move.to] = null;
+                    board[castling_to] = board[castling_from];
+                    board[castling_from] = null;
                 }
             } else {
                 board[move_from] = board[move_to];

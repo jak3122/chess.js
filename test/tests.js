@@ -530,6 +530,10 @@ describe("Castling", function() {
                 game.move(move);
             });
             assert.equal(test.end_fen, game.fen());
+            test.moves.forEach(function() {
+                game.undo();
+            });
+            assert.equal(test.start_fen, game.fen());
         });
     });
 });
@@ -859,7 +863,7 @@ describe("960 with Crazyhouse moves", function() {
 
     ];
     tests.forEach(function(test) {
-        var game = new Crazyhouse();
+        var game = new Crazyhouse({960: true});
         it ("position "+test.num, function() {
             game.new_960(test.num);
             assert.equal(test.start_fen, game.fen());
@@ -932,7 +936,7 @@ describe("960 Castling Legality", function() {
             legal: false },
     ];
     tests.forEach(function(test) {
-        var game = new Crazyhouse();
+        var game = new Crazyhouse({960: true});
         it(test.fen+' '+test.direction+', '+test.side+': '+test.legal, function() {
             game.load(test.fen);
             assert.equal(test.fen, game.fen());
@@ -949,7 +953,7 @@ describe("960 Castling Undo", function() {
             end_fen: 'n1kr1nrq/1p1bp2p/6pQ/pN2Rp2/2P2P2/B2p1p2/1pBPP1PN/3RK1b1/PP w Q - 38 20' },
     ];
     tests.forEach(function(test) {
-        var game = new Crazyhouse();
+        var game = new Crazyhouse({960: true});
         it(test.start_fen+' '+test.moves.join(', '), function() {
             game.load(test.start_fen);
             assert.equal(test.start_fen, game.fen());
