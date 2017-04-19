@@ -219,7 +219,11 @@ var Crazyhouse = function(options) {
     }
 
     function reset() {
-        load(DEFAULT_POSITION);
+        if (mode_960) {
+            new_960(start_position_number);
+        } else {
+            load(DEFAULT_POSITION);
+        }
     }
 
     function load(fen) {
