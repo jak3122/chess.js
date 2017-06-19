@@ -1021,3 +1021,14 @@ describe("Verbose Hand Moves", function() {
     });
 });
 
+describe("En passant capture yields pawn in hand", function() {
+    it("nrqbk3/pp1b1rpp/3p2n1/2pPpp1N/2P5/1N2BP2/PPB1P1PP/1RQ1KR2/ w KQq e6 18 10", function() {
+        var game = new Crazyhouse();
+        game.load("nrqbk3/pp1b1rpp/3p2n1/2pPpp1N/2P5/1N2BP2/PPB1P1PP/1RQ1KR2/ w KQq e6 18 10");
+        var move = game.move('dxe6');
+        var hand = {w:[{type: game.PAWN, color:'w'}],b:[]};
+        assert.deepEqual(game.get_hand({verbose: true}), hand);
+        assert.equal(game.fen(), 'nrqbk3/pp1b1rpp/3pP1n1/2p2p1N/2P5/1N2BP2/PPB1P1PP/1RQ1KR2/P b KQq - 19 10')
+    });
+});
+

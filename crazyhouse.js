@@ -1372,13 +1372,17 @@ var Crazyhouse = function(options) {
                 board[move.from] = null;
             }
 
-            /* if ep capture, remove the captured pawn */
+            /* if ep capture, remove the captured pawn and put a pawn in hand */
             if (move.flags & BITS.EP_CAPTURE) {
+                var captured_type;
                 if (turn === BLACK) {
+                    captured_type = board[move.to - 16].type;
                     board[move.to - 16] = null;
                 } else {
+                    captured_type = board[move.to + 16].type;
                     board[move.to + 16] = null;
                 }
+                put_in_hand({color: us, type: captured_type});
             }
 
             /* if pawn promotion, replace with new piece */
