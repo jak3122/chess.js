@@ -101,5 +101,5 @@
     "minify": "uglifyjs crazyhouse.js -c -m --comments 'license' > crazyhouse.min.js",
     "test": "mocha"
   },
-  "version": "0.0.7"
+  "version": "0.0.8"
 }
